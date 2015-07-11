@@ -10,3 +10,7 @@ exports.answer= function(req, res){
     res.render('quizes/answer',{respuesta: 'Incorrecto'});
   }
 };
+//GET /authors
+exports.authors= function(req, res){
+  res.render('authors', {autor: 'Antonio Bravo Meseguer'});
+};
