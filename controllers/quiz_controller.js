@@ -21,8 +21,9 @@ exports.load = function(req, res, next, quizId) {
     if (req.query.search)
      opciones = {where: ["pregunta like ?", '%' + req.query.search.replace('+','%') +'%']}
     models.Quiz.findAll(opciones).then(function(quizes) {
-    res.render('quizes/index', { quizes: quizes, errors: []});
-}).catch(function(error) { next(error);})
+      res.render('quizes', { quizes: quizes, errors: []});
+  //  res.render('quizes/index', { quizes: quizes, errors: []});
+}).catch(function(error) { next(error);});
 };
 // GET /quizes/:id
 exports.show = function(req, res) {
@@ -51,6 +52,21 @@ exports.new = function(req, res) {
 exports.create = function(req, res){
  var quiz = models.Quiz.build( req.body.quiz );
 
+ quiz
+ .validate()
+ .then(
+   function(err){
+     if (err) {
+       res.render('quizes/new', {quiz: quiz, errors: err.errors});
+     } else {
+       quiz // save: guarda en DB campos pregunta y respuesta de quiz
+       .save({fields: ["pregunta", "respuesta"]})
+       .then( function(){ res.redirect('/quizes')})
+     }      // res.redirect: Redirección HTTP a lista de preguntas
+   }
+ ).catch(function(error){next(error)});
+};
+/*
  var errors = quiz.validate();//ya qe el objeto errors no tiene then(
  if (errors)
  {
@@ -62,6 +78,33 @@ exports.create = function(req, res){
  .save({fields: ["pregunta", "respuesta"]})
  .then( function(){ res.redirect('/quizes')}) ;
  }
+};
+*/
+// GET /quizes/:id/edit
+exports.edit = function(req, res) {
+  var quiz = req.quiz;  // req.quiz: autoload de instancia de quiz
+
+  res.render('quizes/edit', {quiz: quiz, errors: []});
+};
+
+// PUT /quizes/:id
+exports.update = function(req, res) {
+  req.quiz.pregunta  = req.body.quiz.pregunta;
+  req.quiz.respuesta = req.body.quiz.respuesta;
+
+  req.quiz
+  .validate()
+  .then(
+    function(err){
+      if (err) {
+        res.render('quizes/edit', {quiz: req.quiz, errors: err.errors});
+      } else {
+        req.quiz     // save: guarda campos pregunta y respuesta en DB
+        .save( {fields: ["pregunta", "respuesta"]})
+        .then( function(){ res.redirect('/quizes');});
+      }     // Redirección HTTP a lista de preguntas (URL relativo)
+    }
+  ).catch(function(error){next(error)});
 };
 
 //GET /authors
