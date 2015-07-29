@@ -21,8 +21,8 @@ exports.load = function(req, res, next, quizId) {
     if (req.query.search)
      opciones = {where: ["pregunta like ?", '%' + req.query.search.replace('+','%') +'%']}
     models.Quiz.findAll(opciones).then(function(quizes) {
-      res.render('quizes', { quizes: quizes, errors: []});
-  //  res.render('quizes/index', { quizes: quizes, errors: []});
+//      res.redirect('/quizes');
+    res.render('quizes/index', { quizes: quizes, errors: []});
 }).catch(function(error) { next(error);});
 };
 // GET /quizes/:id
@@ -105,6 +105,13 @@ exports.update = function(req, res) {
       }     // Redirección HTTP a lista de preguntas (URL relativo)
     }
   ).catch(function(error){next(error)});
+};
+
+// DELETE /quizes/:id
+exports.destroy = function(req, res) {
+  req.quiz.destroy().then( function() {
+    res.redirect('/quizes');
+  }).catch(function(error){next(error)});
 };
 
 //GET /authors
