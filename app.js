@@ -26,6 +26,36 @@ app.use(cookieParser('Quiz 2015'));
 app.use(session());
 app.use(methodOverride('_method'));
 app.use(express.static(path.join(__dirname, 'public')));
+
+//Chequeo de inactividad
+function chequeaInactividad(req, res, next) {
+//Si estamos accediendo a la página de login o logout, borro el tiempo de la sesion
+  if (req.path.match(/\/login|\/logout/)) {
+    delete req.session.time;
+  }
+  var ahora = new Date();
+  var ultimaActividad = req.session.time ? new Date(req.session.time) : new Date();
+
+  //Sólo lo compruebo cuando hay un usuario validado
+  if (req.session.user) {
+    //Compruebo si hemos excedido el tiempo de inactividad máximo
+    if (ahora - ultimaActividad > 120000) {
+      delete req.session.user;
+      var errors = {'message': 'Tiempo de inactividad excedido. <br/> Sesión caducada.'};
+      req.session.errors = {};
+      res.render('sessions/new', {errors: errors});
+    }
+   else {
+      //Actualizo tiempo ultima peticion
+      req.session.time = new Date();
+      next();
+    }
+  } else {
+    next();
+  }
+}
+
+
 // Helpers dinamicos:
 app.use(function(req, res, next) {
 
@@ -38,7 +68,7 @@ app.use(function(req, res, next) {
   next();
 });
 
-app.use('/', routes);
+app.use('/', chequeaInactividad, routes);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
